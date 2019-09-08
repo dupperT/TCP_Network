@@ -151,6 +151,9 @@ namespace Telepathy
             // only if started
             if (Connecting || Connected)
             {
+                //destroy list.
+                
+                //Logger.Log("Disconnected");
                 // close client
                 client.Close();
 

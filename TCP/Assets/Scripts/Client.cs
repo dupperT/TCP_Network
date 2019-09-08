@@ -1,14 +1,20 @@
-﻿using System.Collections;
+﻿using Sirenix.OdinInspector;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
 public class Client : MonoBehaviour
 {
+
     public string ServerIP = "192.168.1.106";
     Encoding utf8 = Encoding.UTF8;
 
     Telepathy.Client client = new Telepathy.Client();
+
+
+    [ListDrawerSettings()]
+    public List<PlayerData> Players = new List<PlayerData>();
 
     void Awake()
     {
@@ -49,7 +55,6 @@ public class Client : MonoBehaviour
                         //Debug.Log("Server Sent: " + utf8.GetString(msg.data));
                         break;
                     case Telepathy.EventType.Disconnected:
-                        //Destroy(PlayerClient);
                         Debug.Log("Disconnected");
                         break;
                 }
@@ -70,7 +75,14 @@ public class Client : MonoBehaviour
 
         GUI.enabled = client.Connected;
         if (GUI.Button(new Rect(130, 50, 120, 20), "Disconnect"))
+        {
             client.Disconnect();
+            for (int i = 0; i < Players.Count; i++)
+            {
+                Destroy(Players[i].PlayerOBJ);
+            }
+            Players.Clear();
+        }
 
         GUI.enabled = true;
     }
@@ -84,5 +96,56 @@ public class Client : MonoBehaviour
     {
         string TheMessage = utf8.GetString(msg.data);
         string[] SplitMessage = TheMessage.Split('/');
+        
+        if(SplitMessage[0].ToLower() == "pj")
+        {
+            OnPlayerJoin(System.Convert.ToInt32(SplitMessage[1]));
+        }
+
+        if (SplitMessage[0].ToLower() == "pl")
+        {
+            ClientDisconnected(System.Convert.ToInt32(SplitMessage[1]));
+        }
+
+        Debug.Log(TheMessage);
     }
+
+    void AddPlayer(float Horizontal, float Vertical, int connectionID, GameObject PlayerOBJ, PlayerData.PlayerStatus playerStatus)
+    {
+        PlayerData playerData = new PlayerData
+        {
+            Vertical = Horizontal,
+            Horizontal = Vertical,
+            connectionId = connectionID,
+            PlayerOBJ = Instantiate(PlayerOBJ),
+            playerStatus = PlayerData.PlayerStatus.Connected
+        };
+
+        Players.Add(playerData);
+    }
+
+    void RemovePlayer(PlayerData playerData, int index)
+    {
+        Destroy(playerData.PlayerOBJ);
+        Players.RemoveAt(index);
+    }
+
+    void OnPlayerJoin(int connectionID)
+    {
+            AddPlayer(0, 0, connectionID, Resources.Load("Player/Player") as GameObject, PlayerData.PlayerStatus.Connected);
+    }
+
+    void ClientDisconnected(int connectionID)
+    {
+        //remove player
+        for (int i = 0; i < Players.Count; i++)
+        {
+            if (Players[i].connectionId == connectionID)
+            {
+                //delete that player.
+                RemovePlayer(Players[i], i);
+            }
+        }
+    }
+
 }

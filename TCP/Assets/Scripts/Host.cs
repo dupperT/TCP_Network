@@ -4,6 +4,7 @@ using System.Text;
 using UnityEngine;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
+using System;
 
 public class Host : MonoBehaviour
 {
@@ -58,19 +59,37 @@ public class Host : MonoBehaviour
     {
         //add player.
         AddPlayer(0, -0, msg.connectionId, Resources.Load("Player/Player") as GameObject, PlayerData.PlayerStatus.Connected);
+        SendClientConnected();
     }
 
     void ClientDisconnected(Telepathy.Message msg)
     {
-        //remove player
+        //send player discconect
+        for (int p = 0; p < Players.Count; p++)
+        {
+            try
+            {
+                Debug.Log("Sent disconnect to client " + p + " client who went is " + msg.connectionId);
+                SendClientDisconnected(p, msg.connectionId);
+            }
+            catch (InvalidCastException e)
+            {
+                
+            }
+        }
+
+        //for every player in list remove client from list
         for (int i = 0; i < Players.Count; i++)
         {
+            //if item in list is the same as the connection lost then remove that player from list
             if(Players[i].connectionId == msg.connectionId)
             {
                 //delete that player.
                 RemovePlayer(Players[i], i);
-            } 
+            }
         }
+
+        Debug.Log("client disconnect " + msg.connectionId);
     }
 
     void ProcessData(Telepathy.Message msg)
@@ -125,5 +144,26 @@ public class Host : MonoBehaviour
     {
         Destroy(playerData.PlayerOBJ);
         Players.RemoveAt(index);
+    }
+
+    void SendClientConnected()
+    {
+        for (int i = 0; i < Players.Count; i++)
+        {
+            for (int o = 0; o < Players.Count; o++)
+            {
+                server.Send(Players[i].connectionId, SendPlayerWhoConnectedToClients(o));
+            }
+        }
+    }
+
+    void SendClientDisconnected(int clientID, int ConnectionID)
+    {
+        server.Send(clientID, utf8.GetBytes("PL/" + ConnectionID.ToString()));
+    }
+
+    byte[] SendPlayerWhoConnectedToClients(int id)
+    {
+        return utf8.GetBytes("PJ/" + Players[id].connectionId);
     }
 }
