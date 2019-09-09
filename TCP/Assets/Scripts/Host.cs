@@ -64,32 +64,22 @@ public class Host : MonoBehaviour
 
     void ClientDisconnected(Telepathy.Message msg)
     {
-        //send player discconect
-        for (int p = 0; p < Players.Count; p++)
-        {
-            try
-            {
-                Debug.Log("Sent disconnect to client " + p + " client who went is " + msg.connectionId);
-                SendClientDisconnected(p, msg.connectionId);
-            }
-            catch (InvalidCastException e)
-            {
-                
-            }
-        }
 
         //for every player in list remove client from list
         for (int i = 0; i < Players.Count; i++)
         {
             //if item in list is the same as the connection lost then remove that player from list
-            if(Players[i].connectionId == msg.connectionId)
+            if (Players[i].connectionId == msg.connectionId)
             {
                 //delete that player.
                 RemovePlayer(Players[i], i);
+
+                TEST(msg.connectionId);
             }
         }
 
-        Debug.Log("client disconnect " + msg.connectionId);
+
+        Debug.Log("Client DC = " + msg.connectionId);
     }
 
     void ProcessData(Telepathy.Message msg)
@@ -165,5 +155,14 @@ public class Host : MonoBehaviour
     byte[] SendPlayerWhoConnectedToClients(int id)
     {
         return utf8.GetBytes("PJ/" + Players[id].connectionId);
+    }
+
+    void TEST(int disconnectID)
+    {
+        foreach (var player in Players)
+        {
+            Debug.Log("Sent disconnect to client " + player.connectionId + " client who went is " + disconnectID);
+            SendClientDisconnected(player.connectionId, disconnectID);
+        }
     }
 }

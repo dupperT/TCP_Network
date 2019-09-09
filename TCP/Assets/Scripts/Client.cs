@@ -95,6 +95,7 @@ public class Client : MonoBehaviour
     void ProcessData(Telepathy.Message msg)
     {
         string TheMessage = utf8.GetString(msg.data);
+        Debug.Log(TheMessage);
         string[] SplitMessage = TheMessage.Split('/');
         
         if(SplitMessage[0].ToLower() == "pj")
@@ -107,7 +108,7 @@ public class Client : MonoBehaviour
             ClientDisconnected(System.Convert.ToInt32(SplitMessage[1]));
         }
 
-        Debug.Log(TheMessage);
+
     }
 
     void AddPlayer(float Horizontal, float Vertical, int connectionID, GameObject PlayerOBJ, PlayerData.PlayerStatus playerStatus)
@@ -130,9 +131,20 @@ public class Client : MonoBehaviour
         Players.RemoveAt(index);
     }
 
-    void OnPlayerJoin(int connectionID)
+    void OnPlayerJoin(int connectionToJoin)
     {
-            AddPlayer(0, 0, connectionID, Resources.Load("Player/Player") as GameObject, PlayerData.PlayerStatus.Connected);
+        bool exists = false;
+
+        foreach (var player in Players)
+        {
+            if(player.connectionId == connectionToJoin)
+            {
+                exists = true;
+            }
+        }
+
+        if(!exists)
+            AddPlayer(0, 0, connectionToJoin, Resources.Load("Player/Player") as GameObject, PlayerData.PlayerStatus.Connected);
     }
 
     void ClientDisconnected(int connectionID)
